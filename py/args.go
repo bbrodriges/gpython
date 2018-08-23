@@ -471,6 +471,11 @@ func ParseTupleAndKeywords(args Tuple, kwargs StringDict, format string, kwlist 
 			default:
 				return ExceptionNewf(TypeError, "%s() argument %d must be float, not %s", name, i+1, arg.Type().Name)
 			}
+		case "y":
+			if _, ok := arg.(Bytes); !ok {
+				return ExceptionNewf(TypeError, "%s() argument %d must be byte-like object, not %s", name, i+1, arg.Type().Name)
+			}
+			*result = arg
 
 		default:
 			return ExceptionNewf(TypeError, "Unknown/Unimplemented format character %q in ParseTupleAndKeywords called from %s", op, name)
