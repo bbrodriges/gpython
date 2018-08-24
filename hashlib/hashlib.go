@@ -99,6 +99,7 @@ More condensed:
 func init() {
 	methods := []*py.Method{
 		py.MustNewMethod("new", hashlib_new, 0, hashlib_new_doc),
+		py.MustNewMethod("md5", hashlib_md5, 0, ``),
 	}
 	py.NewModule("hashlib", hashlib_doc, methods, nil)
 }

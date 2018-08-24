@@ -85,3 +85,5 @@ func (h Hash) M__le__(other Object) (Object, error) {
 	}
 	return NewBool(bytes.Compare(h.Data, b.Data) <= 0), nil
 }
+
+var _ richComparison = Hash{}

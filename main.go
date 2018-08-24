@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/go-python/gpython/compile"
+	_ "github.com/go-python/gpython/hashlib"
 	"github.com/go-python/gpython/marshal"
 	_ "github.com/go-python/gpython/math"
 	"github.com/go-python/gpython/py"
