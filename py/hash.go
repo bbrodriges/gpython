@@ -86,4 +86,48 @@ func (h Hash) M__le__(other Object) (Object, error) {
 	return NewBool(bytes.Compare(h.Data, b.Data) <= 0), nil
 }
 
+func init() {
+	HashType.Dict["update"] = MustNewMethod("update", func(self Object, arg Object) (Object, error) {
+		data, err := BytesFromObject(arg)
+		if err != nil {
+			return self, err
+		}
+		self.(*Hash).Data = append(self.(*Hash).Data, data...)
+		return self, nil
+	}, 0, "update(arg) -> Update the hash object with the object arg, which must be interpretable as a buffer of bytes. Repeated calls are equivalent to a single call with the concatenation of all the arguments: m.update(a); m.update(b) is equivalent to m.update(a+b).")
+
+	HashType.Dict["digest"] = MustNewMethod("digest", func(self Object) Bytes {
+		return Bytes(self.(*Hash).Hasher.Sum(nil))
+	}, 0, "digest() -> Return the digest of the data passed to the update() method so far. This is a bytes object of size digest_size which may contain bytes in the whole range from 0 to 255.")
+
+	HashType.Dict["hexdigest"] = MustNewMethod("hexdigest", func(self Object) String {
+		return String(fmt.Sprintf("%x", self.(*Hash).Hasher.Sum(nil)))
+	}, 0, "hexdigest() -> Like digest() except the digest is returned as a string object of double length, containing only hexadecimal digits. This may be used to exchange the value safely in email or other non-binary environments.")
+
+	HashType.Dict["copy"] = MustNewMethod("copy", func(self Object) Object {
+		hash := self.(*Hash)
+		dst := make([]byte, len(hash.Data))
+		copy(dst, hash.Data)
+		return NewHash(hash.Name, hash.Hasher, dst)
+	}, 0, "copy() -> Return a copy (“clone”) of the hash object. This can be used to efficiently compute the digests of data sharing a common initial substring.")
+
+	HashType.Dict["name"] = &Property{
+		Fget: func(self Object) (Object, error) {
+			return String(self.(*Hash).Name), nil
+		},
+	}
+
+	HashType.Dict["block_szie"] = &Property{
+		Fget: func(self Object) (Object, error) {
+			return Int(self.(*Hash).Hasher.BlockSize()), nil
+		},
+	}
+
+	HashType.Dict["digest_size"] = &Property{
+		Fget: func(self Object) (Object, error) {
+			return Int(self.(*Hash).Hasher.Size()), nil
+		},
+	}
+}
+
 var _ richComparison = Hash{}

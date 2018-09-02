@@ -7,6 +7,9 @@ package hashlib
 
 import (
 	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"hash"
 
 	"github.com/go-python/gpython/py"
@@ -42,6 +45,16 @@ func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object
 	switch name {
 	case "md5":
 		hasher = md5.New()
+	case "sha1":
+		hasher = sha1.New()
+	case "sha224":
+		hasher = sha256.New224()
+	case "sha256":
+		hasher = sha256.New()
+	case "sha384":
+		hasher = sha512.New384()
+	case "sha512":
+		hasher = sha512.New()
 	default:
 		return nil, py.ExceptionNewf(py.ValueError, "unsupported hash type "+name)
 	}
@@ -55,6 +68,46 @@ func hashlib_md5(self py.Object, arg py.Object) (py.Object, error) {
 		return nil, err
 	}
 	return py.NewHash("md5", md5.New(), data), nil
+}
+
+func hashlib_sha1(self py.Object, arg py.Object) (py.Object, error) {
+	data, err := py.BytesFromObject(arg)
+	if err != nil {
+		return nil, err
+	}
+	return py.NewHash("sha1", sha1.New(), data), nil
+}
+
+func hashlib_sha224(self py.Object, arg py.Object) (py.Object, error) {
+	data, err := py.BytesFromObject(arg)
+	if err != nil {
+		return nil, err
+	}
+	return py.NewHash("sha224", sha256.New224(), data), nil
+}
+
+func hashlib_sha256(self py.Object, arg py.Object) (py.Object, error) {
+	data, err := py.BytesFromObject(arg)
+	if err != nil {
+		return nil, err
+	}
+	return py.NewHash("sha256", sha256.New(), data), nil
+}
+
+func hashlib_sha384(self py.Object, arg py.Object) (py.Object, error) {
+	data, err := py.BytesFromObject(arg)
+	if err != nil {
+		return nil, err
+	}
+	return py.NewHash("sha384", sha512.New384(), data), nil
+}
+
+func hashlib_sha512(self py.Object, arg py.Object) (py.Object, error) {
+	data, err := py.BytesFromObject(arg)
+	if err != nil {
+		return nil, err
+	}
+	return py.NewHash("sha512", sha512.New(), data), nil
 }
 
 const hashlib_doc = `hashlib module - A common interface to many hash functions.
@@ -99,7 +152,12 @@ More condensed:
 func init() {
 	methods := []*py.Method{
 		py.MustNewMethod("new", hashlib_new, 0, hashlib_new_doc),
-		py.MustNewMethod("md5", hashlib_md5, 0, ``),
+		py.MustNewMethod("md5", hashlib_md5, 0, ""),
+		py.MustNewMethod("sha1", hashlib_sha1, 0, ""),
+		py.MustNewMethod("sha224", hashlib_sha224, 0, ""),
+		py.MustNewMethod("sha256", hashlib_sha256, 0, ""),
+		py.MustNewMethod("sha384", hashlib_sha384, 0, ""),
+		py.MustNewMethod("sha512", hashlib_sha512, 0, ""),
 	}
 	py.NewModule("hashlib", hashlib_doc, methods, nil)
 }
