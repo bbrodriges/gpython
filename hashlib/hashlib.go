@@ -17,15 +17,14 @@ import (
 
 /* Implements the HMAC algorithm as described by RFC 2104. */
 
-const hashlib_new_doc = `new(name, data=b'') - returns a new hash object implementing the
-given hash function; initializing the hash
-using the given binary data.`
+const hashlib_new_doc = `new(name, data=b'') - Return a new hashing object using the named algorithm;
+optionally initialized with data (which must be bytes).`
 
 func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object, error) {
 	var on py.Object
-	var os py.Object
+	var os py.Object = py.Bytes(nil)
 
-	kwlist := []string{"name", "string"}
+	kwlist := []string{"name", "data"}
 
 	err := py.ParseTupleAndKeywords(args, kwargs, "s|y:new", kwlist, &on, &os)
 	if err != nil {
@@ -37,12 +36,9 @@ func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object
 		return nil, err
 	}
 
-	var data py.Bytes
-	if os != nil {
-		data, err = py.BytesFromObject(os)
-		if err != nil {
-			return nil, err
-		}
+	data, err := py.BytesFromObject(os)
+	if err != nil {
+		return nil, err
 	}
 
 	var hasher hash.Hash
@@ -72,85 +68,23 @@ func hashlib_md5(self py.Object, args py.Tuple) (py.Object, error) {
 }
 
 func hashlib_sha1(self py.Object, args py.Tuple) (py.Object, error) {
-	var d py.Object
-	err := py.UnpackTuple(args, nil, "sha1", 0, 1, &d)
-	if err != nil {
-		return nil, err
-	}
-
-	var data py.Bytes
-	if d != nil {
-		switch d.Type() {
-		case py.BytesType:
-			data, err = py.BytesFromObject(d)
-		case py.StringType:
-			data = []byte(string(d.(py.String)))
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	hasher := sha1.New()
-	_, err = hasher.Write(data)
-	return py.NewHash("sha1", hasher), err
+	return hashlib_new(self, append([]py.Object{py.String("sha1")}, args...), nil)
 }
 
 func hashlib_sha224(self py.Object, args py.Tuple) (py.Object, error) {
-	var d py.Object
-	err := py.UnpackTuple(args, nil, "sha224", 0, 1, &d)
-	if err != nil {
-		return nil, err
-	}
-
-	var data py.Bytes
-	if d != nil {
-		switch d.Type() {
-		case py.BytesType:
-			data, err = py.BytesFromObject(d)
-		case py.StringType:
-			data = []byte(string(d.(py.String)))
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	hasher := sha256.New224()
-	_, err = hasher.Write(data)
-	return py.NewHash("sha224", hasher), err
+	return hashlib_new(self, append([]py.Object{py.String("sha224")}, args...), nil)
 }
 
-func hashlib_sha256(self py.Object, arg py.Object) (py.Object, error) {
-	data, err := py.BytesFromObject(arg)
-	if err != nil {
-		return nil, err
-	}
-	hasher := sha256.New()
-	_, err = hasher.Write(data)
-	return py.NewHash("sha256", hasher), err
+func hashlib_sha256(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("sha256")}, args...), nil)
 }
 
-func hashlib_sha384(self py.Object, arg py.Object) (py.Object, error) {
-	data, err := py.BytesFromObject(arg)
-	if err != nil {
-		return nil, err
-	}
-	hasher := sha512.New384()
-	_, err = hasher.Write(data)
-	return py.NewHash("sha384", hasher), err
+func hashlib_sha384(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("sha384")}, args...), nil)
 }
 
-func hashlib_sha512(self py.Object, arg py.Object) (py.Object, error) {
-	data, err := py.BytesFromObject(arg)
-	if err != nil {
-		return nil, err
-	}
-	hasher := sha512.New()
-	_, err = hasher.Write(data)
-	return py.NewHash("sha512", hasher), err
+func hashlib_sha512(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("sha512")}, args...), nil)
 }
 
 const hashlib_doc = `hashlib module - A common interface to many hash functions.
