@@ -12,6 +12,8 @@ import (
 	"crypto/sha512"
 	"hash"
 
+	"golang.org/x/crypto/sha3"
+
 	"github.com/go-python/gpython/py"
 )
 
@@ -55,6 +57,12 @@ func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object
 		hasher = sha512.New384()
 	case "sha512":
 		hasher = sha512.New()
+	case "sha3_256":
+		hasher = sha3.New256()
+	case "sha3_384":
+		hasher = sha3.New384()
+	case "sha3_512":
+		hasher = sha3.New512()
 	default:
 		return nil, py.ExceptionNewf(py.ValueError, "unsupported hash type "+name)
 	}
@@ -85,6 +93,18 @@ func hashlib_sha384(self py.Object, args py.Tuple) (py.Object, error) {
 
 func hashlib_sha512(self py.Object, args py.Tuple) (py.Object, error) {
 	return hashlib_new(self, append([]py.Object{py.String("sha512")}, args...), nil)
+}
+
+func hashlib_sha3_256(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("sha3_256")}, args...), nil)
+}
+
+func hashlib_sha3_384(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("sha3_384")}, args...), nil)
+}
+
+func hashlib_sha3_512(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("sha3_512")}, args...), nil)
 }
 
 const hashlib_doc = `hashlib module - A common interface to many hash functions.
@@ -135,6 +155,9 @@ func init() {
 		py.MustNewMethod("sha256", hashlib_sha256, 0, "Returns a sha256 hash object; optionally initialized with a string"),
 		py.MustNewMethod("sha384", hashlib_sha384, 0, "Returns a sha384 hash object; optionally initialized with a string"),
 		py.MustNewMethod("sha512", hashlib_sha512, 0, "Returns a sha512 hash object; optionally initialized with a string"),
+		py.MustNewMethod("sha3_256", hashlib_sha3_256, 0, "Return a new SHA3 hash object with a hashbit length of 32 bytes."),
+		py.MustNewMethod("sha3_384", hashlib_sha3_384, 0, "Return a new SHA3 hash object with a hashbit length of 48 bytes."),
+		py.MustNewMethod("sha3_512", hashlib_sha3_512, 0, "Return a new SHA3 hash object with a hashbit length of 64 bytes."),
 	}
 	py.NewModule("hashlib", hashlib_doc, methods, nil)
 }
