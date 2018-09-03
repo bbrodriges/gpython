@@ -36,10 +36,6 @@ def assertEqual(x, y):
     """assert x == y"""
     assert x == y
 
-def assertAlmostEqual(x, y, places=7):
-    """assert x == y to places"""
-    assert round(abs(y-x), places) == 0
-
 def fail(x):
     """Fails with error message"""
     assert False, x

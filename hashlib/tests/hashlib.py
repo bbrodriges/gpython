@@ -11,6 +11,9 @@ def ftest(name, got, want):
     what = '%s got %r, want %r' % (name, got, want)
     assert got == want, what
 
+doc='Rich comparision'
+assertEqual(hashlib.md5(b'abc'), hashlib.md5(b'abc'))
+
 doc="MD5"  
 ftest('new_md5_0', hashlib.new('md5', b'').hexdigest(), 'd41d8cd98f00b204e9800998ecf8427e')
 ftest('new_md5_1', hashlib.new('md5', b'abc').hexdigest(), '900150983cd24fb0d6963f7d28e17f72')
