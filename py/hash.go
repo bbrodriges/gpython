@@ -17,7 +17,6 @@ var HashType = ObjectType.NewType("hash", "a hash object implementing the given 
 type Hash struct {
 	Name   string
 	Hasher hash.Hash
-	Data   []byte
 }
 
 // Type of this Hash object
@@ -26,8 +25,8 @@ func (h Hash) Type() *Type {
 }
 
 // NewHash defines a new hash
-func NewHash(name string, h hash.Hash, data []byte) *Hash {
-	return &Hash{name, h, data}
+func NewHash(name string, h hash.Hash) *Hash {
+	return &Hash{name, h}
 }
 
 func (h *Hash) M__str__() (Object, error) {
@@ -43,7 +42,7 @@ func (h Hash) M__eq__(other Object) (Object, error) {
 	if !ok {
 		return NotImplemented, nil
 	}
-	return NewBool(bytes.Equal(h.Data, b.Data)), nil
+	return NewBool(bytes.Equal(h.Hasher.Sum(nil), b.Hasher.Sum(nil))), nil
 }
 
 func (h Hash) M__ne__(other Object) (Object, error) {
@@ -51,7 +50,7 @@ func (h Hash) M__ne__(other Object) (Object, error) {
 	if !ok {
 		return NotImplemented, nil
 	}
-	return NewBool(!bytes.Equal(h.Data, b.Data)), nil
+	return NewBool(!bytes.Equal(h.Hasher.Sum(nil), b.Hasher.Sum(nil))), nil
 }
 
 func (h Hash) M__gt__(other Object) (Object, error) {
@@ -59,7 +58,7 @@ func (h Hash) M__gt__(other Object) (Object, error) {
 	if !ok {
 		return NotImplemented, nil
 	}
-	return NewBool(bytes.Compare(h.Data, b.Data) > 0), nil
+	return NewBool(bytes.Compare(h.Hasher.Sum(nil), b.Hasher.Sum(nil)) > 0), nil
 }
 
 func (h Hash) M__lt__(other Object) (Object, error) {
@@ -67,7 +66,7 @@ func (h Hash) M__lt__(other Object) (Object, error) {
 	if !ok {
 		return NotImplemented, nil
 	}
-	return NewBool(bytes.Compare(h.Data, b.Data) < 0), nil
+	return NewBool(bytes.Compare(h.Hasher.Sum(nil), b.Hasher.Sum(nil)) < 0), nil
 }
 
 func (h Hash) M__ge__(other Object) (Object, error) {
@@ -75,7 +74,7 @@ func (h Hash) M__ge__(other Object) (Object, error) {
 	if !ok {
 		return NotImplemented, nil
 	}
-	return NewBool(bytes.Compare(h.Data, b.Data) >= 0), nil
+	return NewBool(bytes.Compare(h.Hasher.Sum(nil), b.Hasher.Sum(nil)) >= 0), nil
 }
 
 func (h Hash) M__le__(other Object) (Object, error) {
@@ -83,7 +82,7 @@ func (h Hash) M__le__(other Object) (Object, error) {
 	if !ok {
 		return NotImplemented, nil
 	}
-	return NewBool(bytes.Compare(h.Data, b.Data) <= 0), nil
+	return NewBool(bytes.Compare(h.Hasher.Sum(nil), b.Hasher.Sum(nil)) <= 0), nil
 }
 
 func init() {
@@ -92,24 +91,19 @@ func init() {
 		if err != nil {
 			return self, err
 		}
-		self.(*Hash).Data = append(self.(*Hash).Data, data...)
-		return self, nil
+		_, err = self.(*Hash).Hasher.Write(data)
+		return self, err
 	}, 0, "update(arg) -> Update the hash object with the object arg, which must be interpretable as a buffer of bytes. Repeated calls are equivalent to a single call with the concatenation of all the arguments: m.update(a); m.update(b) is equivalent to m.update(a+b).")
 
-	HashType.Dict["digest"] = MustNewMethod("digest", func(self Object) Bytes {
-		return Bytes(self.(*Hash).Hasher.Sum(nil))
+	HashType.Dict["digest"] = MustNewMethod("digest", func(self Object) (Object, error) {
+		return Bytes(self.(*Hash).Hasher.Sum(nil)), nil
 	}, 0, "digest() -> Return the digest of the data passed to the update() method so far. This is a bytes object of size digest_size which may contain bytes in the whole range from 0 to 255.")
 
-	HashType.Dict["hexdigest"] = MustNewMethod("hexdigest", func(self Object) String {
-		return String(fmt.Sprintf("%x", self.(*Hash).Hasher.Sum(nil)))
+	HashType.Dict["hexdigest"] = MustNewMethod("hexdigest", func(self Object) (Object, error) {
+		return String(fmt.Sprintf("%x", self.(*Hash).Hasher.Sum(nil))), nil
 	}, 0, "hexdigest() -> Like digest() except the digest is returned as a string object of double length, containing only hexadecimal digits. This may be used to exchange the value safely in email or other non-binary environments.")
 
-	HashType.Dict["copy"] = MustNewMethod("copy", func(self Object) Object {
-		hash := self.(*Hash)
-		dst := make([]byte, len(hash.Data))
-		copy(dst, hash.Data)
-		return NewHash(hash.Name, hash.Hasher, dst)
-	}, 0, "copy() -> Return a copy (“clone”) of the hash object. This can be used to efficiently compute the digests of data sharing a common initial substring.")
+	// FIXME find a way to implement copy() method
 
 	HashType.Dict["name"] = &Property{
 		Fget: func(self Object) (Object, error) {
@@ -117,7 +111,7 @@ func init() {
 		},
 	}
 
-	HashType.Dict["block_szie"] = &Property{
+	HashType.Dict["block_size"] = &Property{
 		Fget: func(self Object) (Object, error) {
 			return Int(self.(*Hash).Hasher.BlockSize()), nil
 		},

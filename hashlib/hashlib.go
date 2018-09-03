@@ -23,11 +23,11 @@ using the given binary data.`
 
 func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object, error) {
 	var on py.Object
-	var od py.Object = new(py.Bytes)
+	var os py.Object
 
-	kwlist := []string{"name", "data"}
+	kwlist := []string{"name", "string"}
 
-	err := py.ParseTupleAndKeywords(args, kwargs, "s|y:new", kwlist, &on, &od)
+	err := py.ParseTupleAndKeywords(args, kwargs, "s|y:new", kwlist, &on, &os)
 	if err != nil {
 		return nil, err
 	}
@@ -36,9 +36,13 @@ func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object
 	if err != nil {
 		return nil, err
 	}
-	data, err := py.BytesFromObject(od)
-	if err != nil {
-		return nil, err
+
+	var data py.Bytes
+	if os != nil {
+		data, err = py.BytesFromObject(os)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var hasher hash.Hash
@@ -59,31 +63,64 @@ func hashlib_new(self py.Object, args py.Tuple, kwargs py.StringDict) (py.Object
 		return nil, py.ExceptionNewf(py.ValueError, "unsupported hash type "+name)
 	}
 
-	return py.NewHash(name, hasher, data), nil
+	_, err = hasher.Write(data)
+	return py.NewHash(name, hasher), err
 }
 
-func hashlib_md5(self py.Object, arg py.Object) (py.Object, error) {
-	data, err := py.BytesFromObject(arg)
+func hashlib_md5(self py.Object, args py.Tuple) (py.Object, error) {
+	return hashlib_new(self, append([]py.Object{py.String("md5")}, args...), nil)
+}
+
+func hashlib_sha1(self py.Object, args py.Tuple) (py.Object, error) {
+	var d py.Object
+	err := py.UnpackTuple(args, nil, "sha1", 0, 1, &d)
 	if err != nil {
 		return nil, err
 	}
-	return py.NewHash("md5", md5.New(), data), nil
-}
 
-func hashlib_sha1(self py.Object, arg py.Object) (py.Object, error) {
-	data, err := py.BytesFromObject(arg)
+	var data py.Bytes
+	if d != nil {
+		switch d.Type() {
+		case py.BytesType:
+			data, err = py.BytesFromObject(d)
+		case py.StringType:
+			data = []byte(string(d.(py.String)))
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	return py.NewHash("sha1", sha1.New(), data), nil
+
+	hasher := sha1.New()
+	_, err = hasher.Write(data)
+	return py.NewHash("sha1", hasher), err
 }
 
-func hashlib_sha224(self py.Object, arg py.Object) (py.Object, error) {
-	data, err := py.BytesFromObject(arg)
+func hashlib_sha224(self py.Object, args py.Tuple) (py.Object, error) {
+	var d py.Object
+	err := py.UnpackTuple(args, nil, "sha224", 0, 1, &d)
 	if err != nil {
 		return nil, err
 	}
-	return py.NewHash("sha224", sha256.New224(), data), nil
+
+	var data py.Bytes
+	if d != nil {
+		switch d.Type() {
+		case py.BytesType:
+			data, err = py.BytesFromObject(d)
+		case py.StringType:
+			data = []byte(string(d.(py.String)))
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	hasher := sha256.New224()
+	_, err = hasher.Write(data)
+	return py.NewHash("sha224", hasher), err
 }
 
 func hashlib_sha256(self py.Object, arg py.Object) (py.Object, error) {
@@ -91,7 +128,9 @@ func hashlib_sha256(self py.Object, arg py.Object) (py.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return py.NewHash("sha256", sha256.New(), data), nil
+	hasher := sha256.New()
+	_, err = hasher.Write(data)
+	return py.NewHash("sha256", hasher), err
 }
 
 func hashlib_sha384(self py.Object, arg py.Object) (py.Object, error) {
@@ -99,7 +138,9 @@ func hashlib_sha384(self py.Object, arg py.Object) (py.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return py.NewHash("sha384", sha512.New384(), data), nil
+	hasher := sha512.New384()
+	_, err = hasher.Write(data)
+	return py.NewHash("sha384", hasher), err
 }
 
 func hashlib_sha512(self py.Object, arg py.Object) (py.Object, error) {
@@ -107,7 +148,9 @@ func hashlib_sha512(self py.Object, arg py.Object) (py.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return py.NewHash("sha512", sha512.New(), data), nil
+	hasher := sha512.New()
+	_, err = hasher.Write(data)
+	return py.NewHash("sha512", hasher), err
 }
 
 const hashlib_doc = `hashlib module - A common interface to many hash functions.
@@ -152,12 +195,12 @@ More condensed:
 func init() {
 	methods := []*py.Method{
 		py.MustNewMethod("new", hashlib_new, 0, hashlib_new_doc),
-		py.MustNewMethod("md5", hashlib_md5, 0, ""),
-		py.MustNewMethod("sha1", hashlib_sha1, 0, ""),
-		py.MustNewMethod("sha224", hashlib_sha224, 0, ""),
-		py.MustNewMethod("sha256", hashlib_sha256, 0, ""),
-		py.MustNewMethod("sha384", hashlib_sha384, 0, ""),
-		py.MustNewMethod("sha512", hashlib_sha512, 0, ""),
+		py.MustNewMethod("md5", hashlib_md5, 0, "Returns a md5 hash object; optionally initialized with a string"),
+		py.MustNewMethod("sha1", hashlib_sha1, 0, "Returns a sha1 hash object; optionally initialized with a string"),
+		py.MustNewMethod("sha224", hashlib_sha224, 0, "Returns a sha224 hash object; optionally initialized with a string"),
+		py.MustNewMethod("sha256", hashlib_sha256, 0, "Returns a sha256 hash object; optionally initialized with a string"),
+		py.MustNewMethod("sha384", hashlib_sha384, 0, "Returns a sha384 hash object; optionally initialized with a string"),
+		py.MustNewMethod("sha512", hashlib_sha512, 0, "Returns a sha512 hash object; optionally initialized with a string"),
 	}
 	py.NewModule("hashlib", hashlib_doc, methods, nil)
 }
