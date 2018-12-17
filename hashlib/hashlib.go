@@ -145,7 +145,7 @@ More condensed:
     'a4337bc45a8fc544c03f52dc550cd6e1e87021bc896588bd79e901e2'
 `
 
-// Initialise the module
+// Initialize the module
 func init() {
 	methods := []*py.Method{
 		py.MustNewMethod("new", hashlib_new, 0, hashlib_new_doc),
